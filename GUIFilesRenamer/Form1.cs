@@ -34,7 +34,7 @@ namespace GUIFilesRenamer
         }
 
         //Browse Button click action
-        private void button3_Click(object sender, EventArgs e)
+        private void BrowseButton_Click(object sender, EventArgs e)
         {
             if (folderBrowserDialog1.ShowDialog() == DialogResult.OK)
                 populateFilesToRename(folderBrowserDialog1.SelectedPath);
@@ -50,32 +50,26 @@ namespace GUIFilesRenamer
             foreach (var file in fileEntries)
             {
                 FileInfo fileInfo = new FileInfo(file);
-                var subFolders = GetSubFolders(fileInfo);
-                richTextBox1.Text += subFolders + fileInfo.Name + "\n";
+                richTextBox1.Text += GetSubFolders(fileInfo) + fileInfo.Name + "\n";
             }
             renameButton.Enabled = true;
         }
 
-        //Rename button click action
-        private void button2_Click(object sender, EventArgs e)
+        private void RenameButton_Click(object sender, EventArgs e)
         {
             if (path != "" && textBox2.Text != "" && textBox3.Text != "" || path != "" && !checkBox1.Checked)
             {
                 var fileEntries = checkBox2.Checked ? Directory.EnumerateFiles(path, "*", SearchOption.AllDirectories) : Directory.EnumerateFiles(path);
-
                 shownError = false;
-
                 foreach (var item in fileEntries)
                 {
                     FileInfo file = new FileInfo(item);
                     if (mediaExtensions.Contains(file.Extension, StringComparer.OrdinalIgnoreCase))
                     {
-                        //tv shows
-                        if (checkBox1.Checked)
+                        if (checkBox1.Checked) //tv shows
                             TvShowRename(path, file);
-                        //movies
-                        else
-                            MoviesRename(path, file);
+                        else //movies
+                            NewMoviesRename(path, file);
                     }
                 }
             }
@@ -91,9 +85,8 @@ namespace GUIFilesRenamer
             renameButton.Enabled = false;
         }
 
-
         //display tv show options
-        private void checkBox1_CheckedChanged(object sender, EventArgs e)
+        private void DisplayTvShowOptions_CheckedChanged(object sender, EventArgs e)
         {
             label1.Visible = label2.Visible = textBox2.Visible = textBox3.Visible = checkBox1.Checked ? true : false;
             checkBox2.Checked = false;
@@ -128,10 +121,12 @@ namespace GUIFilesRenamer
 
             textBox2.Text = textBox2.Text.Substring(0, 1).ToUpper() + textBox2.Text.Substring(1);
             var fileName = path + "\\" + textBox2.Text + " S" + textBox3.Text + "E" + "" + file.Extension.ToLower();
-            RenameMethod(file, fileName, newName);
+            if (newName + file.Extension != file.Name)
+                RenameMethod(file, fileName, newName);
         }
 
-        //only works for movies with the resolution in the name
+        //only works for movies with the resolution in the name (1080p 720p 480p etc)
+        //Would probably be easier to look for 1080p within the string of the name..
         private void MoviesRename(string path, FileInfo file)
         {
             int indexOfResolution;
@@ -147,7 +142,7 @@ namespace GUIFilesRenamer
                 {
                     int characterToCheck = char.IsNumber(Convert.ToChar(restOfName.Substring(indexOfResolution - 4, 1)))
                         ? indexOfResolution - 4 : indexOfResolution - 3;
-                    foundResolution = char.IsNumber(Convert.ToChar(restOfName.Substring(characterToCheck,1))) ? true : false;
+                    foundResolution = char.IsNumber(Convert.ToChar(restOfName.Substring(characterToCheck,characterToCheck-indexOfResolution))) ? true : false;
                     if (foundResolution)
                     {
                         newName = file.Name.Substring(0, indexOfResolution+1);
@@ -159,11 +154,41 @@ namespace GUIFilesRenamer
             }
             if (!string.IsNullOrEmpty(newName)) newName = newName.Replace(".", " ");
             else return; //Error Message
-            var subFolders = GetSubFolders(file);
-            var fileName = path + "\\" + subFolders + newName + file.Extension.ToLower();
-            newName = subFolders + newName;
-            RenameMethod(file, fileName, newName);
+            var fileName = path + "\\" + GetSubFolders(file) + newName + file.Extension.ToLower();
+            if (newName + file.Extension != file.Name)
+            {
+                newName = GetSubFolders(file) + newName;
+                RenameMethod(file, fileName, newName);
+            }
         }
+
+        private string[] resolutions = { "1080p", "720p" };
+
+        private void NewMoviesRename(string path, FileInfo file)
+        {
+            string newName = "";
+            string restOfName = file.Name;
+            try
+            {
+                string something = resolutions.First(x => file.Name.Contains(x)).ToString();
+                if (something != null)
+                {
+                    int startOfResolution = file.Name.IndexOf(something);
+                    newName = file.Name.Substring(0, startOfResolution) + something;
+                    richTextBox2.Text += newName + "\n";
+                }
+            }
+            catch (Exception e)
+            {
+                if (e.Message == "Sequence contains no matching element")
+                {
+                    //richTextBox2.Text += "Could not find resolution in name of:"+ file.Name + "\n";
+                }
+                return;
+            }
+
+        }
+
 
         private string GetSubFolders(FileInfo file)
         {
@@ -190,9 +215,23 @@ namespace GUIFilesRenamer
             }
         }
 
-        private void checkBox2_CheckedChanged(object sender, EventArgs e)
+        private void IncludeSubFolders_CheckedChanged(object sender, EventArgs e)
         {
             if (path != "") populateFilesToRename(path);
+        }
+
+        private void AboutToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            string msg = "Created by Razzer\n"
+                +"Contact: Razzer_05@hotmail.com\n"
+                +"With subject: FilesRenamer APP";
+            var title1 = "About";
+            MessageBox.Show(msg, title1, MessageBoxButtons.OK);
+        }
+
+        private void QuitToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            Dispose(true);
         }
     }
 }
