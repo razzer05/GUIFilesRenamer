@@ -67,7 +67,11 @@ namespace GUIFilesRenamer
                     if (mediaExtensions.Contains(file.Extension, StringComparer.OrdinalIgnoreCase))
                     {
                         if (checkBox1.Checked) //tv shows
+                        {
+                            if (textBox3.Text.Length == 1)//move somewhere else...
+                               textBox3.Text = "0" + textBox3.Text;
                             TvShowRename(path, file);
+                         }
                         else //movies
                             NewMoviesRename(path, file);
                     }
@@ -97,30 +101,28 @@ namespace GUIFilesRenamer
         {
             string newName = "";
             bool foundEpisodeNum = false;
-            var i1 = 0;
-            var fileNameToSearch = file.Name.Substring(i1);
-
-            if (textBox3.Text.Length <= 1)
-                textBox3.Text = "0" + textBox3.Text;
+            var indexOfE = 0;
+            var fileNameToSearch = file.Name;
 
             while (!foundEpisodeNum)
             {
-                i1 = fileNameToSearch.IndexOf("E", StringComparison.InvariantCultureIgnoreCase);
-                if (i1 == -1)
+                indexOfE = fileNameToSearch.IndexOf("E", StringComparison.InvariantCultureIgnoreCase);
+                if (indexOfE == -1)
                 {
                     string errorMsg = "Could not find episode number in file name " + file.Name;
                     MessageBox.Show(errorMsg);
                     return;
                 }
-                newName = fileNameToSearch.Substring(i1 + 1, 2);
-                foundEpisodeNum = char.IsNumber(Convert.ToChar("".Substring(0, 1)));
+                episodeNum = fileNameToSearch.Substring(indexOfE + 1, 2);
+                foundEpisodeNum = char.IsNumber(Convert.ToChar(episodeNum.Substring(0,1)));
                 fileNameToSearch = fileNameToSearch.Substring(i1 + 1);
             }
-            if (!char.IsNumber(Convert.ToChar("".Substring(1, 2))))
-                newName = "0" + "".Substring(0, 1);
+            if (!char.IsNumber(Convert.ToChar(episodeNum.Substring(0, 2))))
+                episodeNum = "0" + episodeNum.Substring(0, 1);
 
             textBox2.Text = textBox2.Text.Substring(0, 1).ToUpper() + textBox2.Text.Substring(1);
-            var fileName = path + "\\" + textBox2.Text + " S" + textBox3.Text + "E" + "" + file.Extension.ToLower();
+            
+            var fileName = path + "\\" + textBox2.Text + " S" + textBox3.Text + "E" + episodeNum + file.Extension.ToLower();
             if (newName + file.Extension != file.Name)
                 RenameMethod(file, fileName, newName);
         }
