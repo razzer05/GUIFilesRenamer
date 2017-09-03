@@ -48,6 +48,9 @@
             this.fileToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.aboutToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.quitToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.Revert = new System.Windows.Forms.Button();
+            this.RevertFileButton = new System.Windows.Forms.Button();
+            this.openFileDialog1 = new System.Windows.Forms.OpenFileDialog();
             this.menuStrip1.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -113,7 +116,7 @@
             // renameButton
             // 
             this.renameButton.Enabled = false;
-            this.renameButton.Location = new System.Drawing.Point(793, 124);
+            this.renameButton.Location = new System.Drawing.Point(688, 124);
             this.renameButton.Margin = new System.Windows.Forms.Padding(4);
             this.renameButton.Name = "renameButton";
             this.renameButton.Size = new System.Drawing.Size(100, 28);
@@ -234,16 +237,43 @@
             // aboutToolStripMenuItem
             // 
             this.aboutToolStripMenuItem.Name = "aboutToolStripMenuItem";
-            this.aboutToolStripMenuItem.Size = new System.Drawing.Size(125, 26);
+            this.aboutToolStripMenuItem.Size = new System.Drawing.Size(181, 26);
             this.aboutToolStripMenuItem.Text = "About";
             this.aboutToolStripMenuItem.Click += new System.EventHandler(this.AboutToolStripMenuItem_Click);
             // 
             // quitToolStripMenuItem
             // 
             this.quitToolStripMenuItem.Name = "quitToolStripMenuItem";
-            this.quitToolStripMenuItem.Size = new System.Drawing.Size(125, 26);
+            this.quitToolStripMenuItem.Size = new System.Drawing.Size(181, 26);
             this.quitToolStripMenuItem.Text = "Quit";
             this.quitToolStripMenuItem.Click += new System.EventHandler(this.QuitToolStripMenuItem_Click);
+            // 
+            // Revert
+            // 
+            this.Revert.Enabled = false;
+            this.Revert.Location = new System.Drawing.Point(795, 124);
+            this.Revert.Margin = new System.Windows.Forms.Padding(4);
+            this.Revert.Name = "Revert";
+            this.Revert.Size = new System.Drawing.Size(100, 28);
+            this.Revert.TabIndex = 17;
+            this.Revert.Text = "Revert";
+            this.Revert.UseVisualStyleBackColor = true;
+            this.Revert.Click += new System.EventHandler(this.RevertButton_Click);
+            // 
+            // RevertFileButton
+            // 
+            this.RevertFileButton.Location = new System.Drawing.Point(688, 165);
+            this.RevertFileButton.Margin = new System.Windows.Forms.Padding(4);
+            this.RevertFileButton.Name = "RevertFileButton";
+            this.RevertFileButton.Size = new System.Drawing.Size(207, 28);
+            this.RevertFileButton.TabIndex = 18;
+            this.RevertFileButton.Text = "Revert from file";
+            this.RevertFileButton.UseVisualStyleBackColor = true;
+            this.RevertFileButton.Click += new System.EventHandler(this.RevertFileButton_Click);
+            // 
+            // openFileDialog1
+            // 
+            this.openFileDialog1.FileName = "openFileDialog1";
             // 
             // Form1
             // 
@@ -251,6 +281,8 @@
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.SystemColors.ControlDark;
             this.ClientSize = new System.Drawing.Size(913, 519);
+            this.Controls.Add(this.RevertFileButton);
+            this.Controls.Add(this.Revert);
             this.Controls.Add(this.label5);
             this.Controls.Add(this.label4);
             this.Controls.Add(this.checkBox2);
@@ -302,6 +334,9 @@
         private System.Windows.Forms.ToolStripMenuItem fileToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem aboutToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem quitToolStripMenuItem;
+        private System.Windows.Forms.Button Revert;
+        private System.Windows.Forms.Button RevertFileButton;
+        private System.Windows.Forms.OpenFileDialog openFileDialog1;
     }
 }
 
