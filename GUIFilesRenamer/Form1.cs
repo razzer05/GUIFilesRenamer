@@ -1,13 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
 using System.IO;
 using System.Linq;
-using System.Net.Configuration;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace GUIFilesRenamer
@@ -106,6 +99,7 @@ namespace GUIFilesRenamer
         }
 
         //only works for tv shows with 'E' for the episode numbering
+        //take tvshow name and season number from folder structure /tv show name/season xx
         private void TvShowRename(string path, FileInfo file)
         {
             string newName = "";
@@ -130,19 +124,14 @@ namespace GUIFilesRenamer
             if (!char.IsNumber(Convert.ToChar(episodeNum.Substring(1, 1))))
                 episodeNum = "0" + episodeNum.Substring(0, 1);
 
-            //find the last word inbetween last two / / and then find the number of it..
-
             var season = path.Substring(path.Length - 2, 2);
-            //richTextBox2.Text = season;
-            //find the word before the last two // for the name of the tv show
-            int indexOfSeason = path.LastIndexOf("\\");
-            var pathWithoutSeason = path.Remove(indexOfSeason);
-            int indexOfStartOfName = pathWithoutSeason.LastIndexOf("\\");
-            var tvShowName = pathWithoutSeason.Substring(indexOfStartOfName+1);
+            //use to check that we are getting the a season number...
+            bool seasonFound = char.IsNumber(Convert.ToChar(season.Substring(0, 1))) && char.IsNumber(Convert.ToChar(season.Substring(1, 1)));
+            var pathWithoutSeason = path.Remove(path.LastIndexOf("\\"));
+            var tvShowName = pathWithoutSeason.Substring(pathWithoutSeason.LastIndexOf("\\") + 1);
 
-            //textBox2.Text = textBox2.Text.Substring(0, 1).ToUpper() + textBox2.Text.Substring(1);
             textBox2.Text = tvShowName.Substring(0, 1).ToUpper() + tvShowName.Substring(1);
-            //var fileName = path + "\\" + textBox2.Text + " S" + textBox3.Text + "E" + episodeNum + file.Extension.ToLower();
+
             var fileName = path + "\\" + textBox2.Text + " S" + season + "E" + episodeNum + file.Extension.ToLower();
             newName = textBox2.Text + " S" + season + "E" + episodeNum;
             if (newName + file.Extension != file.Name)
