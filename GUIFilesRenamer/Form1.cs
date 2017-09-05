@@ -31,7 +31,7 @@ namespace GUIFilesRenamer
             InitializeComponent();
         }
 
-        private void folderBrowserDialog1_HelpRequest(object sender, EventArgs e)
+        private void FolderBrowserDialog1_HelpRequest(object sender, EventArgs e)
         {
 
         }
@@ -102,6 +102,7 @@ namespace GUIFilesRenamer
         {
             label1.Visible = label2.Visible = textBox2.Visible = textBox3.Visible = checkBox1.Checked ? true : false;
             checkBox2.Checked = false;
+            checkBox2.Enabled = checkBox1.Checked ? false : true;
         }
 
         //only works for tv shows with 'E' for the episode numbering
@@ -126,12 +127,54 @@ namespace GUIFilesRenamer
                 foundEpisodeNum = char.IsNumber(Convert.ToChar(episodeNum.Substring(0, 1)));
                 fileNameToSearch = fileNameToSearch.Substring(indexOfE + 1);
             }
-            if (!char.IsNumber(Convert.ToChar(episodeNum.Substring(0, 2))))
+            if (!char.IsNumber(Convert.ToChar(episodeNum.Substring(1, 1))))
+                episodeNum = "0" + episodeNum.Substring(0, 1);
+
+            //find the last word inbetween last two / / and then find the number of it..
+
+            var season = path.Substring(path.Length - 2, 2);
+            //richTextBox2.Text = season;
+            //find the word before the last two // for the name of the tv show
+
+
+            textBox2.Text = textBox2.Text.Substring(0, 1).ToUpper() + textBox2.Text.Substring(1);
+
+            //var fileName = path + "\\" + textBox2.Text + " S" + textBox3.Text + "E" + episodeNum + file.Extension.ToLower();
+            var fileName = path + "\\" + textBox2.Text + " S" + season + "E" + episodeNum + file.Extension.ToLower();
+            newName = textBox2.Text + " S" + season + "E" + episodeNum;
+            if (newName + file.Extension != file.Name)
+                RenameMethod(file, fileName, newName);
+        }
+
+
+        private void TvShowRenameBackup(string path, FileInfo file)
+        {
+            string newName = "";
+            bool foundEpisodeNum = false;
+            var indexOfE = 0;
+            var fileNameToSearch = file.Name;
+            var episodeNum = "";
+
+            while (!foundEpisodeNum)
+            {
+                indexOfE = fileNameToSearch.IndexOf("E", StringComparison.InvariantCultureIgnoreCase);
+                if (indexOfE == -1)
+                {
+                    string errorMsg = "Could not find episode number in file name " + file.Name;
+                    MessageBox.Show(errorMsg);
+                    return;
+                }
+                episodeNum = fileNameToSearch.Substring(indexOfE + 1, 2);
+                foundEpisodeNum = char.IsNumber(Convert.ToChar(episodeNum.Substring(0, 1)));
+                fileNameToSearch = fileNameToSearch.Substring(indexOfE + 1);
+            }
+            if (!char.IsNumber(Convert.ToChar(episodeNum.Substring(1, 1))))
                 episodeNum = "0" + episodeNum.Substring(0, 1);
 
             textBox2.Text = textBox2.Text.Substring(0, 1).ToUpper() + textBox2.Text.Substring(1);
 
             var fileName = path + "\\" + textBox2.Text + " S" + textBox3.Text + "E" + episodeNum + file.Extension.ToLower();
+            newName = textBox2.Text;
             if (newName + file.Extension != file.Name)
                 RenameMethod(file, fileName, newName);
         }
@@ -145,12 +188,10 @@ namespace GUIFilesRenamer
             string restOfName = file.Name;
             try
             {
-                string something = resolutions.First(x => file.Name.Contains(x)).ToString();
-                if (something != null)
+                string resolutionFound = resolutions.First(x => file.Name.Contains(x)).ToString();
+                if (resolutionFound != null)
                 {
-                    int startOfResolution = file.Name.IndexOf(something);
-                    newName = file.Name.Substring(0, startOfResolution) + something;
-                    //richTextBox2.Text += newName + "\n";
+                    newName = file.Name.Substring(0, file.Name.IndexOf(resolutionFound)) + resolutionFound;
                     if (newName + file.Extension != file.Name)
                     {
                         var fileName = path + "\\" + GetSubFolders(file) + newName + file.Extension.ToLower();
@@ -213,6 +254,7 @@ namespace GUIFilesRenamer
         private void IncludeSubFolders_CheckedChanged(object sender, EventArgs e)
         {
             if (path != "") populateFilesToRename(path);
+            checkBox1.Enabled = checkBox2.Checked ? false : true;
         }
 
         private void AboutToolStripMenuItem_Click(object sender, EventArgs e)
