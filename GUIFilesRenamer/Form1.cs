@@ -135,10 +135,13 @@ namespace GUIFilesRenamer
             var season = path.Substring(path.Length - 2, 2);
             //richTextBox2.Text = season;
             //find the word before the last two // for the name of the tv show
+            int indexOfSeason = path.LastIndexOf("\\");
+            var pathWithoutSeason = path.Remove(indexOfSeason);
+            int indexOfStartOfName = pathWithoutSeason.LastIndexOf("\\");
+            var tvShowName = pathWithoutSeason.Substring(indexOfStartOfName+1);
 
-
-            textBox2.Text = textBox2.Text.Substring(0, 1).ToUpper() + textBox2.Text.Substring(1);
-
+            //textBox2.Text = textBox2.Text.Substring(0, 1).ToUpper() + textBox2.Text.Substring(1);
+            textBox2.Text = tvShowName.Substring(0, 1).ToUpper() + tvShowName.Substring(1);
             //var fileName = path + "\\" + textBox2.Text + " S" + textBox3.Text + "E" + episodeNum + file.Extension.ToLower();
             var fileName = path + "\\" + textBox2.Text + " S" + season + "E" + episodeNum + file.Extension.ToLower();
             newName = textBox2.Text + " S" + season + "E" + episodeNum;
