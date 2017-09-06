@@ -38,6 +38,7 @@ namespace GUIFilesRenamer
 
         private void populateFilesToRename(string path)
         {
+            fileNames = "";
             this.path = textBox1.Text = path;
             richTextBox1.Text = richTextBox2.Text = "";
 
@@ -71,7 +72,7 @@ namespace GUIFilesRenamer
                             TvShowRename(path, file);
                         }
                         else //movies
-                            NewMoviesRename(path, file);
+                            MoviesRename(path, file);
                     }
                 }
             }
@@ -174,7 +175,7 @@ namespace GUIFilesRenamer
 
         private string[] resolutions = { "1080p", "720p" };
 
-        private void NewMoviesRename(string path, FileInfo file)
+        private void MoviesRename(string path, FileInfo file)
         {
             string newName = "";
             string restOfName = file.Name;
@@ -184,10 +185,11 @@ namespace GUIFilesRenamer
                 if (resolutionFound != null)
                 {
                     newName = file.Name.Substring(0, file.Name.IndexOf(resolutionFound)) + resolutionFound;
-                    if (newName + file.Extension != file.Name)
+                    if (String.Compare(newName + file.Extension, file.Name, StringComparison.InvariantCultureIgnoreCase)==0)
                     {
-                        var fileName = path + "\\" + GetSubFolders(file) + newName + file.Extension.ToLower();
+                        newName = newName.Replace(".", " ");
                         newName = GetSubFolders(file) + newName;
+                        var fileName = path + "\\" + newName + file.Extension.ToLower();
                         RenameMethod(file, fileName, newName);
                     }
                 }
