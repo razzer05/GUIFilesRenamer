@@ -15,9 +15,11 @@ namespace GUIFilesRenamer
         private bool shownError = false;
         const string title = "Error";
         private string path = "";
-        private RenamedFiles renamedFiles;
+        private RenamedFilesTextFile renamedFiles;
         private string fileNames;
-
+        private bool warnedAboutTvShows = false;
+        private string[] resolutions = { "1080p", "720p" };
+        private string[] checkKeyWords = { "tv"};
 
         public Form1()
         {
@@ -34,6 +36,7 @@ namespace GUIFilesRenamer
         {
             if (folderBrowserDialog1.ShowDialog() == DialogResult.OK)
                 populateFilesToRename(folderBrowserDialog1.SelectedPath);
+            warnedAboutTvShows = false;
         }
 
         private void populateFilesToRename(string path)
@@ -55,7 +58,7 @@ namespace GUIFilesRenamer
         private void RenameButton_Click(object sender, EventArgs e)
         {
             //fileNames = DateTime.Now + "\r\n";
-            if (path != "" && textBox2.Text != "" && textBox3.Text != "" || path != "" && !checkBox1.Checked)
+            if (path != "" && textBox2.Text != "" || path != "" && !checkBox1.Checked)
             {
                 var fileEntries = checkBox2.Checked ? Directory.EnumerateFiles(path, "*", SearchOption.AllDirectories) : Directory.EnumerateFiles(path);
                 shownError = false;
@@ -64,43 +67,58 @@ namespace GUIFilesRenamer
                     FileInfo file = new FileInfo(item);
                     if (mediaExtensions.Contains(file.Extension, StringComparer.OrdinalIgnoreCase))
                     {
-                        
+
                         if (checkBox1.Checked) //tv shows
                         {
-                            if (textBox3.Text.Length == 1)//move somewhere else...
-                                textBox3.Text = "0" + textBox3.Text;
                             TvShowRename(path, file);
                         }
                         else //movies
+                        {
+                            if (!warnedAboutTvShows)
+                            {
+                                int i = 0;
+                                foreach (var keyWords in checkKeyWords)
+                                {
+                                    bool keyword = path.ToLower().Contains(checkKeyWords[i]);
+                                    i++;
+                                    if (keyword)
+                                    {
+                                        var response = MessageBox.Show("Are you sure these folders only contain movies?", "Found tvshows label in path", MessageBoxButtons.OKCancel);
+                                        if (response == DialogResult.Cancel)
+                                        {
+                                            warnedAboutTvShows = false;
+                                            return;
+                                        }
+                                        warnedAboutTvShows = true;
+                                    }
+                                }
+                            }
+
                             MoviesRename(path, file);
+                        }
                     }
                 }
+                //Re-disable rename button
+                renameButton.Enabled = false;
+                //Output renamed files to a file for backup
+                renamedFiles = new RenamedFilesTextFile(fileNames);
+                Revert.Enabled = true;
             }
             else
             {
                 const string errorMsg = "Fill all the boxes";
                 MessageBox.Show(errorMsg, title, MessageBoxButtons.OK);
             }
-
-            //After completion clear the tv show rename options
-            textBox2.Text = textBox3.Text = "";
-            //Re-disable rename button
-            renameButton.Enabled = false;
-            //Output renamed files to a file for backup
-            renamedFiles = new RenamedFiles(fileNames);
-            Revert.Enabled = true;
         }
 
         //display tv show options
         private void DisplayTvShowOptions_CheckedChanged(object sender, EventArgs e)
         {
-            label1.Visible = label2.Visible = textBox2.Visible = textBox3.Visible = checkBox1.Checked ? true : false;
-            checkBox2.Checked = false;
-            checkBox2.Enabled = checkBox1.Checked ? false : true;
+            if(textBox2.Text=="")
+                textBox2.Text = "E";
+            label1.Visible = textBox2.Visible = checkBox1.Checked ? true : false;
         }
-
-        //only works for tv shows with 'E' for the episode numbering
-        //take tvshow name and season number from folder structure /tv show name/season xx
+        
         private void TvShowRename(string path, FileInfo file)
         {
             string newName = "";
@@ -108,72 +126,41 @@ namespace GUIFilesRenamer
             var indexOfE = 0;
             var fileNameToSearch = file.Name;
             var episodeNum = "";
-
+            var epSearchText = textBox2.Text;
             while (!foundEpisodeNum)
             {
-                indexOfE = fileNameToSearch.IndexOf("E", StringComparison.InvariantCultureIgnoreCase);
+                indexOfE = fileNameToSearch.IndexOf(epSearchText,StringComparison.OrdinalIgnoreCase);
                 if (indexOfE == -1)
-                {
-                    string errorMsg = "Could not find episode number in file name " + file.Name;
-                    MessageBox.Show(errorMsg);
                     return;
-                }
-                episodeNum = fileNameToSearch.Substring(indexOfE + 1, 2);
-                foundEpisodeNum = char.IsNumber(Convert.ToChar(episodeNum.Substring(0, 1)));
-                fileNameToSearch = fileNameToSearch.Substring(indexOfE + 1);
+                
+                foundEpisodeNum = char.IsNumber(fileNameToSearch[indexOfE+epSearchText.Length]);
+                episodeNum = fileNameToSearch.Substring(indexOfE + epSearchText.Length, 2);
+                fileNameToSearch = fileNameToSearch.Substring(indexOfE+epSearchText.Length);
             }
             if (!char.IsNumber(Convert.ToChar(episodeNum.Substring(1, 1))))
                 episodeNum = "0" + episodeNum.Substring(0, 1);
 
-            var season = path.Substring(path.Length - 2, 2);
-            //use to check that we are getting the a season number...
-            bool seasonFound = char.IsNumber(Convert.ToChar(season.Substring(0, 1))) && char.IsNumber(Convert.ToChar(season.Substring(1, 1)));
-            var pathWithoutSeason = path.Remove(path.LastIndexOf("\\"));
+            var season = file.FullName.Replace(file.Name,"");
+            season = file.FullName.Substring(season.Length - 3, 2);
+
+            //get last two letters of the season - remove file name and then take last two chars
+            //use to check that we are getting the a season number... we are presuming that the last two characters of season xx are numbers
+            bool seasonFound = char.IsNumber(Convert.ToChar(season.Substring(1, 1)));
+            if (!seasonFound) return;
+            if (!char.IsNumber(Convert.ToChar(season.Substring(0, 1))))
+                season = "0" + season.Substring(1);
+            
+            var pathWithoutSeason = file.FullName.Remove(file.FullName.LastIndexOf(file.Name)-1);
+            pathWithoutSeason = pathWithoutSeason.Remove(pathWithoutSeason.LastIndexOf("\\"));
             var tvShowName = pathWithoutSeason.Substring(pathWithoutSeason.LastIndexOf("\\") + 1);
 
-            textBox2.Text = tvShowName.Substring(0, 1).ToUpper() + tvShowName.Substring(1);
 
-            var fileName = path + "\\" + textBox2.Text + " S" + season + "E" + episodeNum + file.Extension.ToLower();
-            newName = textBox2.Text + " S" + season + "E" + episodeNum;
-            if (newName + file.Extension != file.Name)
+            newName = GetSubFolders(file) + tvShowName + " S" + season + "E" + episodeNum + file.Extension.ToLower();
+            var fileName = path + "\\" + newName;
+            
+            if (newName != file.Name)
                 RenameMethod(file, fileName, newName);
         }
-
-
-        private void TvShowRenameBackup(string path, FileInfo file)
-        {
-            string newName = "";
-            bool foundEpisodeNum = false;
-            var indexOfE = 0;
-            var fileNameToSearch = file.Name;
-            var episodeNum = "";
-
-            while (!foundEpisodeNum)
-            {
-                indexOfE = fileNameToSearch.IndexOf("E", StringComparison.InvariantCultureIgnoreCase);
-                if (indexOfE == -1)
-                {
-                    string errorMsg = "Could not find episode number in file name " + file.Name;
-                    MessageBox.Show(errorMsg);
-                    return;
-                }
-                episodeNum = fileNameToSearch.Substring(indexOfE + 1, 2);
-                foundEpisodeNum = char.IsNumber(Convert.ToChar(episodeNum.Substring(0, 1)));
-                fileNameToSearch = fileNameToSearch.Substring(indexOfE + 1);
-            }
-            if (!char.IsNumber(Convert.ToChar(episodeNum.Substring(1, 1))))
-                episodeNum = "0" + episodeNum.Substring(0, 1);
-
-            textBox2.Text = textBox2.Text.Substring(0, 1).ToUpper() + textBox2.Text.Substring(1);
-
-            var fileName = path + "\\" + textBox2.Text + " S" + textBox3.Text + "E" + episodeNum + file.Extension.ToLower();
-            newName = textBox2.Text;
-            if (newName + file.Extension != file.Name)
-                RenameMethod(file, fileName, newName);
-        }
-
-
-        private string[] resolutions = { "1080p", "720p" };
 
         private void MoviesRename(string path, FileInfo file)
         {
@@ -188,8 +175,8 @@ namespace GUIFilesRenamer
                     if (String.Compare(newName + file.Extension, file.Name, StringComparison.InvariantCultureIgnoreCase)==0)
                     {
                         newName = newName.Replace(".", " ");
-                        newName = GetSubFolders(file) + newName;
-                        var fileName = path + "\\" + newName + file.Extension.ToLower();
+                        newName = GetSubFolders(file) + newName + file.Extension.ToLower();
+                        var fileName = path + "\\" + newName;
                         RenameMethod(file, fileName, newName);
                     }
                 }
@@ -208,16 +195,8 @@ namespace GUIFilesRenamer
 
         private string GetSubFolders(FileInfo file)
         {
-            var subFolders = "";
-            if (!checkBox1.Checked)
-            {
-                subFolders = file.FullName.Replace(path + "\\", "");
-                subFolders = subFolders.Replace(file.Name, "");
-            }
-            else
-            {
-                checkBox2.Checked = false;
-            }
+            var subFolders = file.FullName.Replace(path + "\\", "");
+            subFolders = subFolders.Replace(file.Name, "");
             return subFolders;
         }
 
@@ -230,7 +209,7 @@ namespace GUIFilesRenamer
                 {
                     fileNames += "OldName:" + file.FullName + "\r\nNewName:" + newFileName + "\r\n";
                     file.MoveTo(newFileName);
-                    richTextBox2.Text += newName + file.Extension + "\n";
+                    richTextBox2.Text += newName + "\n";
                 }
             }
             catch (Exception exception)
@@ -248,7 +227,7 @@ namespace GUIFilesRenamer
         private void IncludeSubFolders_CheckedChanged(object sender, EventArgs e)
         {
             if (path != "") populateFilesToRename(path);
-            checkBox1.Enabled = checkBox2.Checked ? false : true;
+            //checkBox1.Enabled = checkBox2.Checked ? false : true;
         }
 
         private void AboutToolStripMenuItem_Click(object sender, EventArgs e)
@@ -279,7 +258,7 @@ namespace GUIFilesRenamer
             
             if (openFileDialog1.ShowDialog() == DialogResult.OK)
             {
-                renamedFiles = new RenamedFiles();
+                renamedFiles = new RenamedFilesTextFile();
                 richTextBox2.Text += renamedFiles.RevertFilesFrom(openFileDialog1.FileName);
             }
         }

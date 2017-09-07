@@ -7,21 +7,24 @@ using System.Threading.Tasks;
 
 namespace GUIFilesRenamer
 {
-    class RenamedFiles
+    class RenamedFilesTextFile
     {
         private StreamWriter sw;
         private StreamReader sr;
         private string path;
 
-        public RenamedFiles() { }
+        public RenamedFilesTextFile() { }
 
-        public RenamedFiles(string outputFiles)
+        public RenamedFilesTextFile(string outputFiles)
         {
             path = "RenamedFiles "+DateTime.Now.ToString()+".txt";
             path = path.Replace("/", "-").Replace(":","-");
-            using (sw = File.AppendText(path))
+            if (outputFiles != null && outputFiles != "")
             {
-                sw.WriteLine(outputFiles);
+                using (sw = File.AppendText(path))
+                {
+                    sw.WriteLine(outputFiles);
+                }
             }
         }
 
