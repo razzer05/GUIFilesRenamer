@@ -172,11 +172,12 @@ namespace GUIFilesRenamer
                 if (resolutionFound != null)
                 {
                     newName = file.Name.Substring(0, file.Name.IndexOf(resolutionFound)) + resolutionFound;
-                    if (String.Compare(newName + file.Extension, file.Name, StringComparison.InvariantCultureIgnoreCase)==0)
+                    if (String.Compare(newName + file.Extension, file.Name, StringComparison.InvariantCultureIgnoreCase)!=0)
                     {
                         newName = newName.Replace(".", " ");
                         newName = GetSubFolders(file) + newName + file.Extension.ToLower();
                         var fileName = path + "\\" + newName;
+                        
                         RenameMethod(file, fileName, newName);
                     }
                 }
